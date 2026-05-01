@@ -1,0 +1,146 @@
+---
+- name: Validate configuration
+  ansible.builtin.assert:
+    that:
+      - pds_pro_enabled | bool
+      - pds_pro_hostname | length > 0
+      - >-
+        (pds_pro_oauth_okta_enabled | bool) or
+        (pds_pro_oauth_google_enabled | bool) or
+        (pds_pro_oauth_microsoft_enabled | bool) or
+        (pds_pro_oauth_facebook_enabled | bool) or
+        (pds_pro_oauth_twitter_enabled | bool)
+      - pds_pro_instances | length > 0
+      - pds_pro_allowlist | length > 0
+    fail_msg: >-
+      pds_pro_enabled, pds_pro_hostname, at least one OAuth provider, at
+      least one instance, and a non-empty allowlist are required.
+
+- name: Create PDS-Pro base directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ pds_pro_base_path }}",    mode: "0755" }
+    - { path: "{{ pds_pro_etc_path }}",     mode: "0750" }
+    - { path: "{{ pds_pro_secrets_path }}", mode: "0700" }
+    - { path: "{{ pds_pro_state_path }}",   mode: "0750" }
+
+- name: Write session secret
+  ansible.builtin.copy:
+    dest: "{{ pds_pro_state_path }}/session-secret"
+    content: "{{ pds_pro_session_secret }}"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0600"
+  notify: restart pds-pro
+
+- name: Write Okta client secret
+  ansible.builtin.copy:
+    dest: "{{ pds_pro_secrets_path }}/okta-client-secret"
+    content: "{{ pds_pro_oauth_okta_client_secret }}"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0600"
+  when: pds_pro_oauth_okta_enabled | bool
+  no_log: true
+  notify: restart pds-pro
+
+- name: Write Google client secret
+  ansible.builtin.copy:
+    dest: "{{ pds_pro_secrets_path }}/google-client-secret"
+    content: "{{ pds_pro_oauth_google_client_secret }}"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0600"
+  when: pds_pro_oauth_google_enabled | bool
+  no_log: true
+  notify: restart pds-pro
+
+- name: Write Microsoft client secret
+  ansible.builtin.copy:
+    dest: "{{ pds_pro_secrets_path }}/microsoft-client-secret"
+    content: "{{ pds_pro_oauth_microsoft_client_secret }}"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0600"
+  when: pds_pro_oauth_microsoft_enabled | bool
+  no_log: true
+  notify: restart pds-pro
+
+- name: Write Facebook client secret
+  ansible.builtin.copy:
+    dest: "{{ pds_pro_secrets_path }}/facebook-client-secret"
+    content: "{{ pds_pro_oauth_facebook_client_secret }}"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0600"
+  when: pds_pro_oauth_facebook_enabled | bool
+  no_log: true
+  notify: restart pds-pro
+
+- name: Write Twitter client secret
+  ansible.builtin.copy:
+    dest: "{{ pds_pro_secrets_path }}/twitter-client-secret"
+    content: "{{ pds_pro_oauth_twitter_client_secret }}"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0600"
+  when: pds_pro_oauth_twitter_enabled | bool
+  no_log: true
+  notify: restart pds-pro
+
+- name: Write per-PDS-instance admin password files
+  ansible.builtin.copy:
+    dest: "{{ pds_pro_secrets_path }}/pds-{{ item.name }}-admin-password"
+    content: "{{ item.admin_password }}"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0600"
+  loop: "{{ pds_pro_instances }}"
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
+  notify: restart pds-pro
+
+- name: Render PDS-Pro config.yaml
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "{{ pds_pro_etc_path }}/config.yaml"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0640"
+  notify: restart pds-pro
+
+- name: Install PDS-Pro systemd service
+  ansible.builtin.template:
+    src: pds-pro.service.j2
+    dest: "/etc/systemd/system/{{ pds_pro_identifier }}.service"
+    mode: "0644"
+  notify: restart pds-pro
+
+- name: Pull PDS-Pro container image
+  community.docker.docker_image:
+    name: "{{ pds_pro_container_image }}"
+    source: pull
+    force_source: true
+  when: not (pds_pro_container_image_self_build | bool)
+
+- name: Ensure PDS-Pro container network exists
+  community.docker.docker_network:
+    name: "{{ pds_pro_container_network }}"
+    driver: bridge
+    state: present
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Start PDS-Pro service
+  ansible.builtin.service:
+    name: "{{ pds_pro_identifier }}"
+    state: started
+    enabled: true

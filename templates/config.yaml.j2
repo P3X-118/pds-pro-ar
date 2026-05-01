@@ -1,0 +1,72 @@
+{# SPDX-FileCopyrightText: 2026 P3X-118
+   SPDX-License-Identifier: AGPL-3.0-or-later
+#}
+listen_addr: "{{ pds_pro_listen_addr }}"
+base_url: "{{ pds_pro_base_url }}"
+
+session:
+  secret_file: "/etc/pds-pro/state/session-secret"
+  secure: {{ pds_pro_session_secure | bool | string | lower }}
+  max_age_sec: {{ pds_pro_session_max_age_sec }}
+
+oauth:
+{% if pds_pro_oauth_okta_enabled | bool %}
+  okta:
+    org_url: "{{ pds_pro_oauth_okta_org_url }}"
+    client_id: "{{ pds_pro_oauth_okta_client_id }}"
+    client_secret_file: "/etc/pds-pro/secrets/okta-client-secret"
+    callback_url: "{{ pds_pro_base_url }}/auth/okta/callback"
+{% endif %}
+{% if pds_pro_oauth_google_enabled | bool %}
+  google:
+    client_id: "{{ pds_pro_oauth_google_client_id }}"
+    client_secret_file: "/etc/pds-pro/secrets/google-client-secret"
+    callback_url: "{{ pds_pro_base_url }}/auth/google/callback"
+    scopes: {{ pds_pro_oauth_google_scopes | to_json }}
+{% endif %}
+{% if pds_pro_oauth_microsoft_enabled | bool %}
+  microsoft:
+    client_id: "{{ pds_pro_oauth_microsoft_client_id }}"
+    client_secret_file: "/etc/pds-pro/secrets/microsoft-client-secret"
+    callback_url: "{{ pds_pro_base_url }}/auth/microsoftonline/callback"
+{% endif %}
+{% if pds_pro_oauth_facebook_enabled | bool %}
+  facebook:
+    client_id: "{{ pds_pro_oauth_facebook_client_id }}"
+    client_secret_file: "/etc/pds-pro/secrets/facebook-client-secret"
+    callback_url: "{{ pds_pro_base_url }}/auth/facebook/callback"
+    scopes: {{ pds_pro_oauth_facebook_scopes | to_json }}
+{% endif %}
+{% if pds_pro_oauth_twitter_enabled | bool %}
+  twitter:
+    client_id: "{{ pds_pro_oauth_twitter_client_id }}"
+    client_secret_file: "/etc/pds-pro/secrets/twitter-client-secret"
+    callback_url: "{{ pds_pro_base_url }}/auth/twitterv2/callback"
+{% endif %}
+
+allowlist:
+{% for entry in pds_pro_allowlist %}
+  - roles: {{ entry.roles | to_json }}
+{%   if entry.subject is defined %}
+    subject: "{{ entry.subject }}"
+{%   endif %}
+{%   if entry.email is defined %}
+    email: "{{ entry.email }}"
+{%   endif %}
+{%   if entry.email_domain is defined %}
+    email_domain: "{{ entry.email_domain }}"
+{%   endif %}
+{% endfor %}
+
+instances:
+{% for inst in pds_pro_instances %}
+  - name: "{{ inst.name }}"
+    pds_host: "{{ inst.pds_host }}"
+    admin_password_file: "/etc/pds-pro/secrets/pds-{{ inst.name }}-admin-password"
+{% endfor %}
+
+audit:
+  db_path: "/etc/pds-pro/state/{{ pds_pro_audit_db_filename }}"
+
+goat:
+  binary_path: "/usr/local/bin/goat"

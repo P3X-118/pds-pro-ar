@@ -1,0 +1,5 @@
+---
+- name: restart pds-pro
+  ansible.builtin.service:
+    name: "{{ pds_pro_identifier }}"
+    state: restarted

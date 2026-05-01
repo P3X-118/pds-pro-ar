@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: P3X-118
+  description: PDS-Pro — SGC web admin UX wrapping `goat pds admin` with operator OAuth
+  company: P3X-118
+  license: AGPL-3.0-or-later
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+  categories:
+    - networking
+    - web
+dependencies: []
