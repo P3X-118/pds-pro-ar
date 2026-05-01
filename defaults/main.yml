@@ -18,7 +18,7 @@ pds_pro_uid: "{{ sgc_playbook_uid }}"
 pds_pro_gid: "{{ sgc_playbook_gid }}"
 
 # Container image
-pds_pro_container_image: "ghcr.io/p3x-118/pds-pro:latest"
+pds_pro_container_image: "docker.io/legitservices/pds-pro:0.1.0"
 pds_pro_container_image_self_build: false
 
 # Network
