@@ -39,8 +39,11 @@ pds_pro_allowlist:
 pds_pro_instances:
   - name: "alpha"
     pds_host: "https://pds-alpha.example.com"
+    # Shared-salt example (default tier). For non-shared, replace
+    # `pds.admin` with `pds.admin.alpha` on BOTH sides — pds-ar's
+    # pds_admin_password_salt and this admin_password.
     admin_password: >-
-      {{ '%s' | format(sgc_pgsk) | password_hash('sha512', 'pds.admin.alpha', rounds=655555) | to_uuid }}
+      {{ '%s' | format(sgc_pgsk) | password_hash('sha512', 'pds.admin', rounds=655555) | to_uuid }}
 ```
 
 ## Notes on secrets
@@ -49,8 +52,15 @@ pds_pro_instances:
   cannot be derived from `sgc_pgsk`. Store them in an Ansible vault file
   and reference them from group_vars.
 - **PDS admin passwords** must match the value the corresponding `pds-ar`
-  role derives for the same instance. The salt convention is
-  `pds.admin.<instance-name>` against `sgc_pgsk`.
+  role derives for the same instance. Two supported tiers:
+  - *Shared* (default, lower cost): one salt `pds.admin` for the entire
+    fleet. The single-PDS-per-host case usually wants this.
+  - *Non-shared* (higher cost): per-instance salt `pds.admin.<instance>`.
+    Required when you want a compromised admin credential to blast-radius
+    only one instance, or when running multiple PDS instances under a
+    single `sgc_pgsk`. Set `pds_admin_password_salt: "pds.admin.<inst>"`
+    on the `pds-ar` deployment AND use the same salt in this role's
+    `pds_pro_instances[].admin_password` derivation.
 - **Session secret** is derived from `sgc_pgsk` so it stays stable across
   restarts and reinstalls without being checked in. Rotating it logs all
   operators out.
