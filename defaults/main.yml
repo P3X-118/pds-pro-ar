@@ -25,6 +25,11 @@ pds_pro_container_image_self_build: false
 pds_pro_container_network: "{{ pds_pro_identifier }}"
 pds_pro_container_additional_networks: []
 
+# Extra raw `docker create` arguments (each a separate list item), inserted
+# verbatim. Use for site-specific needs such as --add-host to resolve an
+# externally-named IdP back through the host (OIDC hairpin-NAT workaround).
+pds_pro_container_extra_arguments: []
+
 pds_pro_container_additional_networks_auto: |
   {{
     ([revproxy_service_networks] if revproxy_service_networks else [])
@@ -54,6 +59,16 @@ pds_pro_session_max_age_sec: 86400
 
 # OAuth providers — only enabled providers are rendered into config.yaml.
 # Each provider's client_secret is written to a separate file with mode 0600.
+
+# Generic OpenID Connect provider (e.g. self-hosted Authentik). Endpoints are
+# resolved via OIDC discovery on issuer_url + /.well-known/openid-configuration,
+# so no vendor-specific URL scheme is required. Callback: <base>/auth/oidc/callback.
+pds_pro_oauth_oidc_enabled: false
+pds_pro_oauth_oidc_issuer_url: ""
+pds_pro_oauth_oidc_client_id: ""
+pds_pro_oauth_oidc_client_secret: ""
+pds_pro_oauth_oidc_scopes: ["openid", "profile", "email"]
+
 # The Okta client secret has no derivation (it's externally minted), so
 # operators must supply it via group_vars / vault.
 pds_pro_oauth_okta_enabled: false

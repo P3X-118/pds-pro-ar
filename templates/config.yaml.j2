@@ -10,6 +10,14 @@ session:
   max_age_sec: {{ pds_pro_session_max_age_sec }}
 
 oauth:
+{% if pds_pro_oauth_oidc_enabled | bool %}
+  oidc:
+    issuer_url: "{{ pds_pro_oauth_oidc_issuer_url }}"
+    client_id: "{{ pds_pro_oauth_oidc_client_id }}"
+    client_secret_file: "/etc/pds-pro/secrets/oidc-client-secret"
+    callback_url: "{{ pds_pro_base_url }}/auth/oidc/callback"
+    scopes: {{ pds_pro_oauth_oidc_scopes | to_json }}
+{% endif %}
 {% if pds_pro_oauth_okta_enabled | bool %}
   okta:
     org_url: "{{ pds_pro_oauth_okta_org_url }}"
@@ -55,6 +63,9 @@ allowlist:
 {%   endif %}
 {%   if entry.email_domain is defined %}
     email_domain: "{{ entry.email_domain }}"
+{%   endif %}
+{%   if entry.instances is defined %}
+    instances: {{ entry.instances | to_json }}
 {%   endif %}
 {% endfor %}
 

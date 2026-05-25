@@ -5,6 +5,7 @@
       - pds_pro_enabled | bool
       - pds_pro_hostname | length > 0
       - >-
+        (pds_pro_oauth_oidc_enabled | bool) or
         (pds_pro_oauth_okta_enabled | bool) or
         (pds_pro_oauth_google_enabled | bool) or
         (pds_pro_oauth_microsoft_enabled | bool) or
@@ -36,6 +37,17 @@
     owner: "{{ pds_pro_uid }}"
     group: "{{ pds_pro_gid }}"
     mode: "0600"
+  notify: restart pds-pro
+
+- name: Write OIDC client secret
+  ansible.builtin.copy:
+    dest: "{{ pds_pro_secrets_path }}/oidc-client-secret"
+    content: "{{ pds_pro_oauth_oidc_client_secret }}"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0600"
+  when: pds_pro_oauth_oidc_enabled | bool
+  no_log: true
   notify: restart pds-pro
 
 - name: Write Okta client secret

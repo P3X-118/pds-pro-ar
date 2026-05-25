@@ -26,6 +26,9 @@ ExecStartPre={{ sysd_docker_host_command }} create \
       --cap-drop=ALL \
       --read-only \
       --tmpfs=/tmp:rw,noexec,nosuid,size=50m \
+      {% for arg in pds_pro_container_extra_arguments | default([]) %}
+      {{ arg }} \
+      {% endfor %}
       --network={{ pds_pro_container_network }} \
       {% set additional_networks = (pds_pro_container_additional_networks_auto | from_yaml if pds_pro_container_additional_networks_auto is string else pds_pro_container_additional_networks_auto) %}
       {% for network in (pds_pro_container_additional_networks + additional_networks) %}
