@@ -118,6 +118,65 @@
   no_log: true
   notify: restart pds-pro
 
+- name: Write Authentik API token (atproto linkage)
+  ansible.builtin.copy:
+    dest: "{{ pds_pro_secrets_path }}/authentik-token"
+    content: "{{ pds_pro_authentik_token }}"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0600"
+  when: pds_pro_atproto_enabled | bool
+  no_log: true
+  notify: restart pds-pro
+
+- name: Write atproto managed-password secret
+  ansible.builtin.copy:
+    dest: "{{ pds_pro_secrets_path }}/atproto-managed-secret"
+    content: "{{ pds_pro_atproto_managed_secret }}"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0600"
+  when: pds_pro_atproto_enabled | bool
+  no_log: true
+  notify: restart pds-pro
+
+- name: Write claim OIDC client secret
+  ansible.builtin.copy:
+    dest: "{{ pds_pro_secrets_path }}/claim-oidc-secret"
+    content: "{{ pds_pro_atproto_claim_client_secret }}"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0600"
+  when:
+    - pds_pro_atproto_enabled | bool
+    - pds_pro_atproto_claim_issuer_url | length > 0
+  no_log: true
+  notify: restart pds-pro
+
+- name: Write atproto webhook secret
+  ansible.builtin.copy:
+    dest: "{{ pds_pro_secrets_path }}/atproto-webhook-secret"
+    content: "{{ pds_pro_atproto_webhook_secret }}"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0600"
+  when: pds_pro_atproto_enabled | bool
+  no_log: true
+  notify: restart pds-pro
+
+- name: Write ntfy token
+  ansible.builtin.copy:
+    dest: "{{ pds_pro_secrets_path }}/ntfy-token"
+    content: "{{ pds_pro_ntfy_token }}"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0600"
+  when:
+    - pds_pro_atproto_enabled | bool
+    - pds_pro_ntfy_token | length > 0
+  no_log: true
+  notify: restart pds-pro
+
 - name: Render PDS-Pro config.yaml
   ansible.builtin.template:
     src: config.yaml.j2

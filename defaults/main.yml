@@ -53,7 +53,7 @@ pds_pro_container_labels_traefik_additional_labels: []
 
 # Session — secret derived from sgc_pgsk so it's stable across restarts and
 # reinstalls without being checked into source.
-pds_pro_session_secret: "{{ '%s' | format(sgc_pgsk) | password_hash('sha512', 'pds-pro.session', rounds=655555) | to_uuid | replace('-', '') }}"
+pds_pro_session_secret: "{{ (sgc_pgsk ~ 'pds.pro.session') | hash('sha512') }}"
 pds_pro_session_secure: true
 pds_pro_session_max_age_sec: 86400
 
@@ -103,6 +103,53 @@ pds_pro_allowlist: []
 # corresponding instance — typically:
 #   "{{ '%s' | format(sgc_pgsk) | password_hash('sha512', 'pds.admin.<instance>', rounds=655555) | to_uuid }}"
 pds_pro_instances: []
+
+# --- Cross-auth federation (atproto <-> Authentik), optional -----------------
+# When enabled, pds-pro provisions <handle>.<handle_domain> atproto accounts for
+# Authentik-authed users (the /claim flow) and links the DID/handle back onto the
+# Authentik user. See the pds-pro repo's CLAUDE.md "Cross-auth federation".
+pds_pro_atproto_enabled: false
+# Must match a pds_pro_instances[].name — the PDS that hosts claimed accounts.
+pds_pro_atproto_instance: ""
+# BARE, user-facing handle domain (drop any pds./bsky. service prefix the PDS
+# host carries): cooey.club -> handles render as <user>.cooey.club.
+pds_pro_atproto_handle_domain: ""
+
+# Authentik group whose members are auto-provisioned an atproto account. REQUIRED
+# on a shared Authentik (cooey shares it with other brands) — empty means the
+# sweep provisions nobody (safe). Users join by authorizing a cooey application.
+pds_pro_atproto_member_group: ""
+# Secret pds-pro derives per-account managed passwords from (so it can broker
+# atproto sessions/app-passwords). Derived from sgc_pgsk; never user-facing.
+pds_pro_atproto_managed_secret: "{{ '%s' | format(sgc_pgsk) | password_hash('sha512', 'pds.pro.managed', rounds=655555) | to_uuid }}"
+
+# Webhook shared secret: authenticates the Authentik user-creation notification
+# that nudges a real-time provisioning sweep (POST /hooks/authentik), so an
+# account is created the moment a user appears via ANY door (Discord/chat/bsky).
+# The SAME value is configured on the Authentik notification transport
+# (provision-atproto-webhook.py, env PDS_PRO_WEBHOOK_SECRET).
+pds_pro_atproto_webhook_secret: "{{ '%s' | format(sgc_pgsk) | password_hash('sha512', 'pds.pro.hook', rounds=655555) | to_uuid }}"
+
+# Authentik API — pds-pro PATCHes attributes.atproto onto users. The token is
+# derived from sgc_pgsk; the SAME value must be provisioned as the
+# svc-pds-pro-atproto-writer token (provision-atproto-writer-token.py uses
+# env PDS_PRO_AUTHENTIK_TOKEN; keep this salt in lockstep).
+pds_pro_authentik_base_url: ""
+pds_pro_authentik_token: "{{ '%s' | format(sgc_pgsk) | password_hash('sha512', 'pds.pro.aktoken', rounds=655555) | to_uuid }}"
+
+# ntfy alert on a (non-blocking) provisioning failure. Optional.
+pds_pro_ntfy_base_url: ""
+pds_pro_ntfy_topic: ""
+pds_pro_ntfy_token: ""
+
+# End-user claim OIDC client (cooey brand, NOT the operator login). The
+# client_secret is derived from sgc_pgsk; the SAME value must be provisioned via
+# provision-pds-pro-claim.py (env PDS_PRO_CLAIM_OIDC_SECRET). callback is forced
+# to <base_url>/claim/callback in the template.
+pds_pro_atproto_claim_issuer_url: ""
+pds_pro_atproto_claim_client_id: "pds-pro-claim"
+pds_pro_atproto_claim_client_secret: "{{ '%s' | format(sgc_pgsk) | password_hash('sha512', 'pds.pro.claim', rounds=655555) | to_uuid }}"
+pds_pro_atproto_claim_scopes: ["openid", "profile", "email"]
 
 # Audit log
 pds_pro_audit_db_filename: "audit.db"
