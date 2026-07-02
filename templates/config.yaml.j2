@@ -101,6 +101,7 @@ atproto:
   handle_domain: "{{ pds_pro_atproto_handle_domain }}"
   managed_password_secret_file: "/etc/pds-pro/secrets/atproto-managed-secret"
   webhook_secret_file: "/etc/pds-pro/secrets/atproto-webhook-secret"
+  broker_secret_file: "/etc/pds-pro/secrets/atproto-broker-secret"
   member_group: "{{ pds_pro_atproto_member_group }}"
 {% if pds_pro_atproto_claim_issuer_url | length > 0 %}
   claim:

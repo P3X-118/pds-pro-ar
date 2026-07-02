@@ -130,6 +130,13 @@ pds_pro_atproto_managed_secret: "{{ '%s' | format(sgc_pgsk) | password_hash('sha
 # (provision-atproto-webhook.py, env PDS_PRO_WEBHOOK_SECRET).
 pds_pro_atproto_webhook_secret: "{{ '%s' | format(sgc_pgsk) | password_hash('sha512', 'pds.pro.hook', rounds=655555) | to_uuid }}"
 
+# Broker shared secret: authenticates the internal atproto session-broker endpoint
+# (POST /internal/atproto-session) that chat (delta) calls server-to-server over
+# the shared host docker network to embed Bluesky for an already-authenticated
+# cooey user (no second login). Derived from sgc_pgsk; the SAME value must be
+# configured on the stoked/delta side (stoked_pds_pro_broker_secret, same salt).
+pds_pro_atproto_broker_secret: "{{ '%s' | format(sgc_pgsk) | password_hash('sha512', 'pds.pro.broker', rounds=655555) | to_uuid }}"
+
 # Authentik API — pds-pro PATCHes attributes.atproto onto users. The token is
 # derived from sgc_pgsk; the SAME value must be provisioned as the
 # svc-pds-pro-atproto-writer token (provision-atproto-writer-token.py uses
