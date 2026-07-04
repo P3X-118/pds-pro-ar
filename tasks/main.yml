@@ -188,6 +188,17 @@
   no_log: true
   notify: restart pds-pro
 
+- name: Write Cloudflare API token (publishes _atproto handle TXT records)
+  ansible.builtin.copy:
+    dest: "{{ pds_pro_secrets_path }}/cloudflare-api-token"
+    content: "{{ pds_pro_cloudflare_api_token }}"
+    owner: "{{ pds_pro_uid }}"
+    group: "{{ pds_pro_gid }}"
+    mode: "0600"
+  when: pds_pro_cloudflare_enabled | bool
+  no_log: true
+  notify: restart pds-pro
+
 - name: Render PDS-Pro config.yaml
   ansible.builtin.template:
     src: config.yaml.j2

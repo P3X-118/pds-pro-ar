@@ -149,6 +149,14 @@ pds_pro_ntfy_base_url: ""
 pds_pro_ntfy_topic: ""
 pds_pro_ntfy_token: ""
 
+# Cloudflare DNS: when enabled, pds-pro publishes the `_atproto.<handle>` TXT
+# record for each provisioned handle so it resolves externally (otherwise the
+# bsky AppView shows the account as handle.invalid). Optional; the api_token
+# needs Zone:DNS:Edit on zone_name (the zone that holds the handle domain).
+pds_pro_cloudflare_enabled: false
+pds_pro_cloudflare_api_token: ""
+pds_pro_cloudflare_zone_name: ""
+
 # End-user claim OIDC client (cooey brand, NOT the operator login). The
 # client_secret is derived from sgc_pgsk; the SAME value must be provisioned via
 # provision-pds-pro-claim.py (env PDS_PRO_CLAIM_OIDC_SECRET). callback is forced

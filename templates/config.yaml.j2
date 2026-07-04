@@ -112,3 +112,9 @@ atproto:
     scopes: {{ pds_pro_atproto_claim_scopes | to_json }}
 {% endif %}
 {% endif %}
+{% if pds_pro_cloudflare_enabled | bool %}
+
+cloudflare:
+  api_token_file: "/etc/pds-pro/secrets/cloudflare-api-token"
+  zone_name: "{{ pds_pro_cloudflare_zone_name }}"
+{% endif %}
